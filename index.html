@@ -1569,6 +1569,118 @@ document.addEventListener('DOMContentLoaded', () => {
       nav.style.background = 'rgba(18, 21, 15, 0.92)';
     }
   });
+
+  // ===== APPLY ADMIN CHANGES FROM LOCALSTORAGE =====
+  try {
+    const raw = localStorage.getItem('nordvilt_admin');
+    if (raw) {
+      const data = JSON.parse(raw);
+
+      // Simple text fields → data-i18n elements
+      const i18nMap = {
+        hero_sub: 'hero_sub', hero_class: 'hero_class', hero_status: 'hero_status',
+        hero_cta: 'hero_cta', hero_exp_val: 'hero_exp_val',
+        about_sub: 'about_sub', about_p1: 'about_p1', about_p2: 'about_p2', about_p3: 'about_p3',
+        stat1_label: 'stat_years', stat2_label: 'stat_ha', stat3_label: 'stat_guests', stat4_label: 'stat_dogs',
+        exp_t1: 'exp_lodge_title', exp_t2: 'exp_food_title', exp_t3: 'exp_guide_title', exp_t4: 'exp_dogs_title',
+        rev_num: 'rev_num', rev_title: 'rev_title', rev_sub: 'rev_sub',
+        contact_num: 'contact_num', contact_title: 'contact_title', contact_sub: 'contact_sub',
+        form_submit: 'form_submit',
+        hunts_num: 'hunts_num', hunts_title: 'hunts_title', hunts_sub: 'hunts_sub',
+        exp_num: 'exp_num', exp_title: 'exp_title', exp_sub: 'exp_sub',
+      };
+
+      for (const [dataKey, i18nKey] of Object.entries(i18nMap)) {
+        if (data[dataKey]) {
+          const el = document.querySelector(`[data-i18n="${i18nKey}"]`);
+          if (el) el.textContent = data[dataKey];
+        }
+      }
+
+      // Stat values
+      const statEls = document.querySelectorAll('.about-stat-value');
+      if (data.stat1_val && statEls[0]) statEls[0].textContent = data.stat1_val;
+      if (data.stat2_val && statEls[1]) statEls[1].textContent = data.stat2_val;
+      if (data.stat3_val && statEls[2]) statEls[2].textContent = data.stat3_val;
+      if (data.stat4_val && statEls[3]) statEls[3].textContent = data.stat4_val;
+
+      // Hunt cards
+      if (data.hunts) {
+        const huntI18n = {
+          '0': { name: 'hunt_moose', desc: 'hunt_moose_desc', days: 'hunt_moose_days', group: 'hunt_moose_group' },
+          '1': { name: 'hunt_bird', desc: 'hunt_bird_desc', days: 'hunt_bird_days', group: 'hunt_bird_group' },
+          '2': { name: 'hunt_deer', desc: 'hunt_deer_desc', days: 'hunt_deer_days', group: 'hunt_deer_group' },
+          '3': { name: 'hunt_bear', desc: 'hunt_bear_desc', days: 'hunt_bear_days', group: 'hunt_bear_group' },
+        };
+        const priceEls = document.querySelectorAll('.hunt-card-price');
+        Object.keys(data.hunts).forEach(h => {
+          const hunt = data.hunts[h];
+          const keys = huntI18n[h];
+          if (!keys) return;
+          if (hunt.name) { const el = document.querySelector(`[data-i18n="${keys.name}"]`); if (el) el.textContent = hunt.name; }
+          if (hunt.desc) { const el = document.querySelector(`[data-i18n="${keys.desc}"]`); if (el) el.textContent = hunt.desc; }
+          if (hunt.days) { const el = document.querySelector(`[data-i18n="${keys.days}"]`); if (el) el.textContent = hunt.days; }
+          if (hunt.group) { const el = document.querySelector(`[data-i18n="${keys.group}"]`); if (el) el.textContent = hunt.group; }
+          if (hunt.price && priceEls[h]) {
+            priceEls[h].innerHTML = hunt.price + ' <small>SEK / PERSON</small>';
+          }
+        });
+      }
+
+      // Reviews
+      const reviewNames = document.querySelectorAll('.review-author-name');
+      const reviewDetails = document.querySelectorAll('.review-author-detail');
+      const reviewTexts = document.querySelectorAll('.review-card p');
+      for (let i = 1; i <= 3; i++) {
+        if (data[`rev${i}_name`] && reviewNames[i-1]) reviewNames[i-1].textContent = data[`rev${i}_name`];
+        if (data[`rev${i}_detail`] && reviewDetails[i-1]) reviewDetails[i-1].textContent = data[`rev${i}_detail`];
+        if (data[`rev${i}_text`] && reviewTexts[i-1]) reviewTexts[i-1].textContent = data[`rev${i}_text`];
+      }
+
+      // Contact info
+      if (data.contact_phone) {
+        document.querySelectorAll('.contact-info-value').forEach(el => {
+          if (el.textContent.includes('070-')) el.innerHTML = `<a href="tel:${data.contact_phone.replace(/[^+\d]/g,'')}">${data.contact_phone}</a>`;
+        });
+      }
+      if (data.contact_email) {
+        document.querySelectorAll('.contact-info-value').forEach(el => {
+          if (el.textContent.includes('@')) el.innerHTML = `<a href="mailto:${data.contact_email}">${data.contact_email}</a>`;
+        });
+      }
+      if (data.contact_place) {
+        document.querySelectorAll('.contact-info-value').forEach(el => {
+          if (el.textContent.includes('Ånge')) el.textContent = data.contact_place;
+        });
+      }
+
+      // Images from base64
+      if (data.images) {
+        const imgMap = {
+          hero: 'images/hero.png',
+          portrait: 'images/portrait.png',
+          moose: 'images/moose.png',
+          dogs: 'images/dogs.png',
+          campfire: 'images/campfire.jpg',
+          frost: 'images/frost-moor.jpg',
+        };
+        Object.keys(data.images).forEach(key => {
+          if (imgMap[key] && data.images[key]) {
+            document.querySelectorAll(`img[src="${imgMap[key]}"]`).forEach(img => {
+              img.src = data.images[key];
+            });
+          }
+        });
+      }
+
+      // Also update the SV translations object so language switching keeps admin edits
+      if (typeof translations !== 'undefined' && translations.sv) {
+        for (const [dataKey, i18nKey] of Object.entries(i18nMap)) {
+          if (data[dataKey]) translations.sv[i18nKey] = data[dataKey];
+        }
+      }
+    }
+  } catch(e) { console.warn('Admin data load:', e); }
 });
 
 // ===== LANGUAGE SYSTEM =====

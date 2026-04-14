@@ -456,6 +456,7 @@ body {
     <span class="unsaved-dot" id="unsavedDot"></span>
     <button class="btn-preview" onclick="openPreview()">&#x1F441; Förhandsgranska</button>
     <button class="btn-export" onclick="exportSite()">&#x2B07; Exportera hemsida</button>
+    <a href="index.html" class="btn-preview" style="margin-top:0.5rem; display:block; text-align:center;">&#x2190; Tillbaka till hemsidan</a>
   </div>
 </aside>
 
@@ -903,15 +904,17 @@ loadFromLocal();
 
 // ===== PREVIEW =====
 function openPreview() {
-  window.open('/v7.html', '_blank');
-  showToast('Förhandsgranskning öppnad');
+  // Save first so preview shows latest changes
+  saveToLocal();
+  window.open('index.html', '_blank');
+  showToast('Förhandsgranskning öppnad — spara först för att se ändringar!');
 }
 
 // ===== EXPORT =====
 async function exportSite() {
   showToast('Exporterar hemsida...');
   try {
-    const resp = await fetch('/v7.html');
+    const resp = await fetch('index.html');
     let html = await resp.text();
     const data = gatherData();
 
