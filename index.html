@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NORDVILT — Guidad Jakt i Norrland</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: #12150f;
+  color: #d4c9a8;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ===== TOPOGRAPHIC BACKGROUND ===== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background:
+    repeating-radial-gradient(ellipse 800px 600px at 20% 30%, transparent 0, transparent 98px, #c4a35a 100px, transparent 102px),
+    repeating-radial-gradient(ellipse 600px 900px at 70% 60%, transparent 0, transparent 78px, #c4a35a 80px, transparent 82px),
+    repeating-radial-gradient(ellipse 1000px 500px at 50% 80%, transparent 0, transparent 58px, #c4a35a 60px, transparent 62px),
+    repeating-radial-gradient(ellipse 700px 700px at 80% 20%, transparent 0, transparent 118px, #c4a35a 120px, transparent 122px),
+    repeating-radial-gradient(ellipse 500px 800px at 30% 70%, transparent 0, transparent 138px, #c4a35a 140px, transparent 142px);
+}
+
+/* ===== TOPO OVERLAY PATTERN ===== */
+.topo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 200 Q100 100 200 200 T400 200' fill='none' stroke='%23c4a35a' stroke-width='0.8'/%3E%3Cpath d='M0 220 Q100 120 200 220 T400 220' fill='none' stroke='%23c4a35a' stroke-width='0.6'/%3E%3Cpath d='M0 240 Q100 140 200 240 T400 240' fill='none' stroke='%23c4a35a' stroke-width='0.5'/%3E%3Cpath d='M0 160 Q100 260 200 160 T400 160' fill='none' stroke='%23c4a35a' stroke-width='0.7'/%3E%3Cpath d='M0 140 Q100 240 200 140 T400 140' fill='none' stroke='%23c4a35a' stroke-width='0.5'/%3E%3Cpath d='M0 100 Q120 180 200 100 T400 100' fill='none' stroke='%23c4a35a' stroke-width='0.4'/%3E%3Cpath d='M0 300 Q80 220 200 300 T400 300' fill='none' stroke='%23c4a35a' stroke-width='0.6'/%3E%3C/svg%3E");
+  background-size: 400px 400px;
+}
+
+/* ===== GRID LINES ===== */
+.grid-lines {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background:
+    linear-gradient(90deg, #c4a35a 1px, transparent 1px),
+    linear-gradient(0deg, #c4a35a 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* ===== CONTENT WRAPPER ===== */
+.content-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2, h3, h4 {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+a {
+  color: #c4a35a;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+a:hover { color: #e87a2e; }
+
+/* ===== LANGUAGE SWITCHER ===== */
+.lang-switcher {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  margin-left: 1.5rem;
+  border-left: 1px solid rgba(196, 163, 90, 0.15);
+  padding-left: 1.5rem;
+}
+
+.lang-btn {
+  background: none;
+  border: 1px solid rgba(196, 163, 90, 0.15);
+  color: #d4c9a8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.3s;
+  text-transform: uppercase;
+}
+
+.lang-btn:hover { opacity: 0.8; border-color: rgba(196, 163, 90, 0.4); }
+
+.lang-btn.active {
+  opacity: 1;
+  color: #12150f;
+  background: #c4a35a;
+  border-color: #c4a35a;
+}
+
+@media (max-width: 768px) {
+  .lang-switcher {
+    margin-left: 0;
+    border-left: none;
+    padding-left: 0;
+    position: absolute;
+    top: 50%;
+    right: 4rem;
+    transform: translateY(-50%);
+  }
+}
+
+/* ===== NAV ===== */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(18, 21, 15, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(196, 163, 90, 0.15);
+  padding: 0 2rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.3s;
+}
+.nav-logo {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 0.2em;
+  color: #c4a35a;
+}
+.nav-logo span { color: #e87a2e; }
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #d4c9a8;
+  opacity: 0.7;
+  transition: all 0.3s;
+  position: relative;
+}
+.nav-links a:hover { opacity: 1; color: #c4a35a; }
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #e87a2e;
+  transition: width 0.3s;
+}
+.nav-links a:hover::after { width: 100%; }
+
+/* Mobile nav */
+.nav-toggle { display: none; background: none; border: none; cursor: pointer; }
+.nav-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #c4a35a;
+  margin: 5px 0;
+  transition: 0.3s;
+}
+
+@media (max-width: 768px) {
+  .nav-toggle { display: block; }
+  .nav-links {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: rgba(18, 21, 15, 0.97);
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 0;
+    gap: 1.5rem;
+    transform: translateY(-120%);
+    transition: transform 0.4s ease;
+  }
+  .nav-links.open { transform: translateY(0); }
+}
+
+/* ===== SECTION STRUCTURE ===== */
+section {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  margin-bottom: 4rem;
+  position: relative;
+}
+.section-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  color: #e87a2e;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.section-coord {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: #c4a35a;
+  opacity: 0.4;
+  margin-top: 0.5rem;
+}
+.section-title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  color: #d4c9a8;
+  line-height: 1.1;
+  position: relative;
+}
+.section-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 2px;
+  background: #e87a2e;
+  margin-top: 1rem;
+}
+.section-subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: #c4a35a;
+  opacity: 0.6;
+  margin-top: 1rem;
+  text-transform: uppercase;
+}
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(196, 163, 90, 0.2), transparent);
+  margin: 1rem 0;
+}
+
+/* ===== HERO ===== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-top: 64px;
+  overflow: hidden;
+  max-width: 100%;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3;
+  filter: grayscale(40%) contrast(1.1);
+}
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(18, 21, 15, 0.4) 0%, rgba(18, 21, 15, 0.2) 40%, rgba(18, 21, 15, 0.85) 100%),
+    linear-gradient(90deg, rgba(18, 21, 15, 0.6) 0%, transparent 30%, transparent 70%, rgba(18, 21, 15, 0.6) 100%);
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+  padding: 2rem;
+}
+.hero-classification {
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  color: #e87a2e;
+  border: 1px solid rgba(232, 122, 46, 0.3);
+  display: inline-block;
+  padding: 0.4rem 1.5rem;
+  margin-bottom: 2rem;
+}
+.hero-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(3rem, 10vw, 7rem);
+  font-weight: 700;
+  color: #d4c9a8;
+  letter-spacing: 0.15em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+.hero-title span {
+  display: block;
+  font-size: 0.35em;
+  letter-spacing: 0.35em;
+  color: #c4a35a;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+  font-weight: 400;
+}
+.hero-data {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+}
+.hero-data-item {
+  text-align: center;
+}
+.hero-data-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  color: #c4a35a;
+  opacity: 0.5;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.hero-data-value {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #d4c9a8;
+}
+.hero-scroll {
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: pulse-down 2s infinite;
+}
+.hero-scroll span {
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  color: #c4a35a;
+  opacity: 0.5;
+}
+.hero-scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, #c4a35a, transparent);
+  opacity: 0.4;
+}
+@keyframes pulse-down {
+  0%, 100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 0.5; transform: translateX(-50%) translateY(8px); }
+}
+
+/* Corner coordinates on hero */
+.hero-corner {
+  position: absolute;
+  z-index: 2;
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: #c4a35a;
+  opacity: 0.25;
+}
+.hero-corner.tl { top: 80px; left: 2rem; }
+.hero-corner.tr { top: 80px; right: 2rem; }
+.hero-corner.bl { bottom: 6rem; left: 2rem; }
+.hero-corner.br { bottom: 6rem; right: 2rem; }
+
+/* ===== ABOUT / OM OSS ===== */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+.about-portrait {
+  position: relative;
+}
+.about-portrait img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  filter: grayscale(20%) contrast(1.05);
+  border: 1px solid rgba(196, 163, 90, 0.15);
+}
+.about-portrait::before {
+  content: 'GUIDE // PROFIL';
+  position: absolute;
+  top: -1.5rem;
+  left: 0;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: #e87a2e;
+  opacity: 0.6;
+}
+.about-portrait::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: -1rem;
+  bottom: -1rem;
+  border: 1px solid rgba(196, 163, 90, 0.1);
+  z-index: -1;
+}
+.about-text p {
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.85;
+  line-height: 1.9;
+}
+.about-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(196, 163, 90, 0.1);
+}
+.about-stat-value {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #c4a35a;
+  line-height: 1;
+}
+.about-stat-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: #d4c9a8;
+  opacity: 0.5;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+@media (max-width: 768px) {
+  .about-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .about-portrait { max-width: 400px; }
+}
+
+/* ===== HUNTS / JAKTER ===== */
+.hunts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+.hunt-card {
+  background: rgba(26, 28, 23, 0.8);
+  border: 1px solid rgba(196, 163, 90, 0.1);
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+.hunt-card:hover {
+  border-color: rgba(196, 163, 90, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+}
+.hunt-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #e87a2e, #c4a35a);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+.hunt-card:hover::before { transform: scaleX(1); }
+.hunt-card-index {
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  color: #e87a2e;
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+.hunt-card-image {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  filter: grayscale(30%) contrast(1.05);
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(196, 163, 90, 0.08);
+}
+.hunt-card h3 {
+  font-size: 1.4rem;
+  color: #d4c9a8;
+  margin-bottom: 0.5rem;
+}
+.hunt-card-meta {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.hunt-card-meta span {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: #c4a35a;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+.hunt-card p {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+.hunt-card-price {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #c4a35a;
+}
+.hunt-card-price small {
+  font-size: 0.5em;
+  font-weight: 400;
+  opacity: 0.6;
+  letter-spacing: 0.1em;
+}
+.hunt-card-specs {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(196, 163, 90, 0.08);
+  flex-wrap: wrap;
+}
+.hunt-card-spec {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  opacity: 0.4;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .hunts-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== EXPERIENCE / UPPLEVELSEN ===== */
+.experience-intro {
+  max-width: 700px;
+  margin-bottom: 4rem;
+}
+.experience-intro p {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  line-height: 1.9;
+}
+.experience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+.exp-card {
+  background: rgba(26, 28, 23, 0.6);
+  border: 1px solid rgba(196, 163, 90, 0.08);
+  overflow: hidden;
+  transition: all 0.4s;
+}
+.exp-card:hover {
+  border-color: rgba(196, 163, 90, 0.2);
+  transform: translateY(-2px);
+}
+.exp-card-img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  filter: grayscale(20%);
+  transition: filter 0.4s;
+}
+.exp-card:hover .exp-card-img { filter: grayscale(0%); }
+.exp-card-body {
+  padding: 2rem;
+}
+.exp-card-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  color: #e87a2e;
+  opacity: 0.7;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.exp-card h3 {
+  font-size: 1.2rem;
+  color: #d4c9a8;
+  margin-bottom: 0.8rem;
+}
+.exp-card p {
+  font-size: 0.78rem;
+  opacity: 0.65;
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .experience-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== GALLERY STRIP ===== */
+.gallery-strip {
+  display: flex;
+  gap: 0;
+  max-width: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+.gallery-strip img {
+  flex: 1;
+  min-width: 0;
+  height: 300px;
+  object-fit: cover;
+  filter: grayscale(30%) contrast(1.05);
+  transition: filter 0.5s;
+}
+.gallery-strip img:hover { filter: grayscale(0%); }
+
+@media (max-width: 768px) {
+  .gallery-strip { flex-direction: column; }
+  .gallery-strip img { height: 200px; }
+}
+
+/* ===== REVIEWS / OMDOMEN ===== */
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+.review-card {
+  background: rgba(26, 28, 23, 0.6);
+  border: 1px solid rgba(196, 163, 90, 0.08);
+  padding: 2.5rem;
+  position: relative;
+}
+.review-card::before {
+  content: '"';
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 4rem;
+  color: #c4a35a;
+  opacity: 0.15;
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  line-height: 1;
+}
+.review-stars {
+  color: #c4a35a;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.2rem;
+}
+.review-card p {
+  font-size: 0.78rem;
+  font-style: italic;
+  opacity: 0.75;
+  line-height: 1.9;
+  margin-bottom: 1.5rem;
+}
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.review-author-info {
+  font-size: 0.7rem;
+}
+.review-author-name {
+  color: #d4c9a8;
+  font-weight: 600;
+  display: block;
+}
+.review-author-detail {
+  color: #c4a35a;
+  opacity: 0.5;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 900px) {
+  .reviews-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== CONTACT / KONTAKT ===== */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+}
+.contact-info-item {
+  margin-bottom: 2rem;
+}
+.contact-info-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  color: #e87a2e;
+  opacity: 0.6;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.contact-info-value {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.1rem;
+  color: #d4c9a8;
+}
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.form-group label {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  opacity: 0.6;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: rgba(26, 28, 23, 0.8);
+  border: 1px solid rgba(196, 163, 90, 0.15);
+  color: #d4c9a8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  padding: 0.9rem 1rem;
+  transition: border-color 0.3s;
+  outline: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #c4a35a;
+}
+.form-group textarea { resize: vertical; min-height: 120px; }
+.form-group select { cursor: pointer; }
+.form-group select option { background: #1a1c17; }
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.btn-submit {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #12150f;
+  background: #c4a35a;
+  border: none;
+  padding: 1rem 2.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  align-self: flex-start;
+}
+.btn-submit:hover {
+  background: #e87a2e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(232, 122, 46, 0.25);
+}
+
+@media (max-width: 768px) {
+  .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
+/* ===== FOOTER ===== */
+footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(196, 163, 90, 0.1);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.footer-brand {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #c4a35a;
+  font-size: 1rem;
+}
+.footer-legal {
+  font-size: 0.6rem;
+  opacity: 0.35;
+  letter-spacing: 0.1em;
+}
+.footer-coords {
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: #c4a35a;
+  opacity: 0.3;
+}
+
+/* ===== SCROLL ANIMATIONS ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Stagger children */
+.stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.stagger.visible > *:nth-child(1) { transition-delay: 0s; opacity: 1; transform: translateY(0); }
+.stagger.visible > *:nth-child(2) { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
+.stagger.visible > *:nth-child(3) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+.stagger.visible > *:nth-child(4) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+
+/* ===== TACTICAL DECORATIONS ===== */
+.tac-mark {
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  color: #c4a35a;
+  opacity: 0.2;
+  text-transform: uppercase;
+}
+.tac-line {
+  width: 100%;
+  height: 1px;
+  background: rgba(196, 163, 90, 0.08);
+}
+
+/* ===== ADMIN LOGIN ===== */
+.admin-login-btn {
+  display: none;
+}
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-overlay.open { display: flex; }
+
+.login-box {
+  background: #12150f;
+  border: 1px solid rgba(196,163,90,0.15);
+  padding: 2.5rem;
+  width: 360px;
+  max-width: 90vw;
+  position: relative;
+}
+
+.login-box-header {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  margin-bottom: 0.3rem;
+}
+
+.login-box-sub {
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: #e87a2e;
+  opacity: 0.6;
+  margin-bottom: 1.5rem;
+}
+
+.login-box .form-group {
+  margin-bottom: 1rem;
+}
+
+.login-box .form-group label {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  opacity: 0.6;
+  margin-bottom: 0.3rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.login-box .form-group input {
+  width: 100%;
+  background: rgba(26,28,23,0.8);
+  border: 1px solid rgba(196,163,90,0.15);
+  color: #d4c9a8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  padding: 0.7rem 0.9rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.login-box .form-group input:focus { border-color: #c4a35a; }
+
+.login-btn-submit {
+  width: 100%;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #12150f;
+  background: #c4a35a;
+  border: none;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 0.5rem;
+}
+
+.login-btn-submit:hover { background: #e87a2e; }
+
+.login-error {
+  font-size: 0.65rem;
+  color: #e87a2e;
+  margin-top: 0.75rem;
+  display: none;
+  letter-spacing: 0.1em;
+}
+
+.login-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #c4a35a;
+  opacity: 0.5;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.login-close:hover { opacity: 1; }
+
+/* ===== CTA BUTTON ===== */
+.btn-cta {
+  display: inline-block;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #12150f;
+  background: #c4a35a;
+  padding: 1rem 2.5rem;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  margin-top: 2rem;
+}
+.btn-cta:hover {
+  background: #e87a2e;
+  color: #12150f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(232, 122, 46, 0.25);
+}
+</style>
+</head>
+<body>
+
+<div class="topo-overlay"></div>
+<div class="grid-lines"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">NORD<span>VILT</span></div>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Meny">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links">
+    <li><a href="#om" data-i18n="nav_om">Om oss</a></li>
+    <li><a href="#jakter" data-i18n="nav_jakter">Jakter</a></li>
+    <li><a href="#upplevelsen" data-i18n="nav_upplevelsen">Upplevelsen</a></li>
+    <li><a href="#omdomen" data-i18n="nav_omdomen">Omdömen</a></li>
+    <li><a href="#kontakt" data-i18n="nav_kontakt">Kontakt</a></li>
+  </ul>
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('sv')">SV</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('de')">DE</button>
+  </div>
+</nav>
+
+<div class="content-wrapper">
+
+<!-- ===== 01 // HERO ===== -->
+<section class="hero" id="hero">
+  <div class="hero-bg">
+    <img src="images/hero.png" alt="Norrländskt jaktlandskap">
+  </div>
+
+  <div class="hero-corner tl">N 62&deg;31'24"</div>
+  <div class="hero-corner tr">E 15&deg;39'18"</div>
+  <div class="hero-corner bl">ELEVATION: 264M</div>
+  <div class="hero-corner br">SEKTOR: ÅNGE</div>
+
+  <div class="hero-content">
+    <div class="hero-classification" data-i18n="hero_class">// TAKTISK BRIEFING // JAKT I NORRLAND //</div>
+    <h1 class="hero-title">
+      NORDVILT
+      <span data-i18n="hero_sub">Guidad jakt i norra Sveriges vildmark</span>
+    </h1>
+    <div class="hero-data">
+      <div class="hero-data-item">
+        <span class="hero-data-label" data-i18n="hero_pos">POSITION</span>
+        <span class="hero-data-value">Ånge, Norrland</span>
+      </div>
+      <div class="hero-data-item">
+        <span class="hero-data-label" data-i18n="hero_exp">ERFARENHET</span>
+        <span class="hero-data-value" data-i18n="hero_exp_val">25+ år</span>
+      </div>
+      <div class="hero-data-item">
+        <span class="hero-data-label" data-i18n="hero_terrain">TERRÄNG</span>
+        <span class="hero-data-value">8 500 ha</span>
+      </div>
+      <div class="hero-data-item">
+        <span class="hero-data-label">STATUS</span>
+        <span class="hero-data-value" style="color:#e87a2e;" data-i18n="hero_status">Operativ</span>
+      </div>
+    </div>
+    <a href="#kontakt" class="btn-cta" style="margin-top:3rem;" data-i18n="hero_cta">Boka din jakt</a>
+  </div>
+
+  <div class="hero-scroll">
+    <span>SCROLL</span>
+    <div class="hero-scroll-line"></div>
+  </div>
+</section>
+
+<!-- ===== 02 // OM OSS ===== -->
+<section id="om">
+  <div class="section-header reveal">
+    <span class="section-number" data-i18n="about_num">02 // OM OSS</span>
+    <h2 class="section-title">Dennis Jonsson</h2>
+    <div class="section-coord">N 62&deg;31' E 15&deg;39' // ÅNGE, VÄSTERNORRLAND</div>
+    <p class="section-subtitle" data-i18n="about_sub">Guide &mdash; Jägare &mdash; Naturmänniska</p>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-portrait reveal-left">
+      <img src="images/portrait.png" alt="Dennis Jonsson">
+    </div>
+    <div class="about-text reveal-right">
+      <p data-i18n="about_p1">
+        Dennis Jonsson växte upp med skogen som lekplats och jakten som livsstil. Redan som ung
+        följde han med sin far ut i de vidsträckta markerna kring Ånge, och det var där passionen
+        för viltet och naturen tog fäste. Idag, med över 25 års erfarenhet som jägare och jaktguide,
+        delar Dennis sin djupa kunskap om norrländsk natur med gäster från hela Sverige och Europa.
+      </p>
+      <p data-i18n="about_p2">
+        Nordvilt erbjuder en genuin jaktupplevelse där respekt för naturen och viltet alltid
+        står i centrum. Dennis driver sina jakter med egna, vältränade hundar över marker som
+        han känner lika väl som sin egen bakgård. Varje jakt planeras noggrant med hänsyn till
+        terräng, väder och viltets rörelsemönster.
+      </p>
+      <p data-i18n="about_p3">
+        Här handlar det inte bara om skottet &mdash; det handlar om helheten. Tystnaden i
+        gryningsljuset, spåren i frosten, hundarna som arbetar, och kvällarna vid elden.
+        Det är den upplevelsen som får gäster att komma tillbaka år efter år.
+      </p>
+
+      <div class="about-stats stagger">
+        <div>
+          <div class="about-stat-value">25+</div>
+          <div class="about-stat-label" data-i18n="stat_years">År som guide</div>
+        </div>
+        <div>
+          <div class="about-stat-value">8 500</div>
+          <div class="about-stat-label" data-i18n="stat_ha">Hektar jaktmark</div>
+        </div>
+        <div>
+          <div class="about-stat-value">500+</div>
+          <div class="about-stat-label" data-i18n="stat_guests">Nöjda gäster</div>
+        </div>
+        <div>
+          <div class="about-stat-value">6</div>
+          <div class="about-stat-label" data-i18n="stat_dogs">Tränade jakthundar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 03 // JAKTER ===== -->
+<section id="jakter">
+  <div class="section-header reveal">
+    <span class="section-number" data-i18n="hunts_num">03 // JAKTPROGRAM</span>
+    <h2 class="section-title" data-i18n="hunts_title">Våra jakter</h2>
+    <div class="section-coord">TERRÄNG: SKOG / MYR / FJÄLL // AREA: 8 500 HA</div>
+    <p class="section-subtitle" data-i18n="hunts_sub">Välj din jaktupplevelse &mdash; alla jakter inkluderar guide, hundar och logi</p>
+  </div>
+
+  <div class="hunts-grid stagger">
+    <!-- ALGJAKT -->
+    <div class="hunt-card reveal">
+      <div class="hunt-card-index">03.1 // STORVILTS</div>
+      <img class="hunt-card-image" src="images/moose.png" alt="Älg i norrländsk skog">
+      <h3 data-i18n="hunt_moose">Älgjakt</h3>
+      <div class="hunt-card-meta">
+        <span>Sep &mdash; Okt</span>
+        <span data-i18n="hunt_moose_days">2&ndash;3 dagar</span>
+        <span data-i18n="hunt_moose_group">Grupp: 2&ndash;6 pers</span>
+      </div>
+      <p data-i18n="hunt_moose_desc">
+        Klassisk norrländsk älgjakt med löshund i vidsträckt skogsmark. Dennis guidar er genom
+        marker med stark älgstam och hjälper er att komma i skottläge. Jakten bedrivs med
+        vältränade älghundar som arbetar självständigt i terrängen.
+      </p>
+      <div class="hunt-card-price">12 500 <small>SEK / PERSON</small></div>
+      <div class="hunt-card-specs">
+        <span class="hunt-card-spec">Löshund</span>
+        <span class="hunt-card-spec">Klass 1 mark</span>
+        <span class="hunt-card-spec">Inkl. logi</span>
+        <span class="hunt-card-spec">Elevation: 142m&ndash;480m</span>
+      </div>
+    </div>
+
+    <!-- FAGELJAKT -->
+    <div class="hunt-card reveal">
+      <div class="hunt-card-index">03.2 // SMÅVILT</div>
+      <img class="hunt-card-image" src="images/hero2.png" alt="Fågeljakt i fjällnära skog">
+      <h3 data-i18n="hunt_bird">Fågeljakt</h3>
+      <div class="hunt-card-meta">
+        <span>Sep &mdash; Nov</span>
+        <span data-i18n="hunt_bird_days">1&ndash;2 dagar</span>
+        <span data-i18n="hunt_bird_group">Grupp: 2&ndash;4 pers</span>
+      </div>
+      <p data-i18n="hunt_bird_desc">
+        Jakt på skogsfågel &mdash; tjäder, orre och ripa &mdash; i orörd fjällnära skog och myrmark.
+        Med stående fågelhund söker vi av de bästa biotoperna i det norrländska
+        landskapet. En jakt som kräver kondition men belönar med oförglömliga upplevelser.
+      </p>
+      <div class="hunt-card-price">8 900 <small>SEK / PERSON</small></div>
+      <div class="hunt-card-specs">
+        <span class="hunt-card-spec">Stående hund</span>
+        <span class="hunt-card-spec">Myr & skog</span>
+        <span class="hunt-card-spec">Inkl. lunch</span>
+        <span class="hunt-card-spec">Elevation: 320m&ndash;610m</span>
+      </div>
+    </div>
+
+    <!-- HJORTJAKT -->
+    <div class="hunt-card reveal">
+      <div class="hunt-card-index">03.3 // STORVILTS</div>
+      <img class="hunt-card-image" src="images/frost-moor.jpg" alt="Hjortjakt i dimma">
+      <h3 data-i18n="hunt_deer">Hjortjakt</h3>
+      <div class="hunt-card-meta">
+        <span>Okt &mdash; Nov</span>
+        <span data-i18n="hunt_deer_days">2 dagar</span>
+        <span data-i18n="hunt_deer_group">Grupp: 2&ndash;4 pers</span>
+      </div>
+      <p data-i18n="hunt_deer_desc">
+        Spännande jakt på kronhjort i det norrländska skogslandskapet. Vi jagar med
+        smygning och vak vid utfodringsplatser under den magiska höstperioden.
+        Dennis kunskap om hjortens vanor ger er bästa möjliga förutsättningar för en lyckad jakt.
+      </p>
+      <div class="hunt-card-price">9 500 <small>SEK / PERSON</small></div>
+      <div class="hunt-card-specs">
+        <span class="hunt-card-spec">Smyg & vak</span>
+        <span class="hunt-card-spec">Brunstperiod</span>
+        <span class="hunt-card-spec">Inkl. logi</span>
+        <span class="hunt-card-spec">Elevation: 180m&ndash;390m</span>
+      </div>
+    </div>
+
+    <!-- BJORNJAKT -->
+    <div class="hunt-card reveal">
+      <div class="hunt-card-index">03.4 // STORVILT // PREMIUM</div>
+      <img class="hunt-card-image" src="images/blue-forest.jpg" alt="Björnjakt i tät skog">
+      <h3 data-i18n="hunt_bear">Björnjakt</h3>
+      <div class="hunt-card-meta">
+        <span>Aug &mdash; Sep</span>
+        <span data-i18n="hunt_bear_days">3&ndash;5 dagar</span>
+        <span data-i18n="hunt_bear_group">Grupp: 2&ndash;4 pers</span>
+      </div>
+      <p data-i18n="hunt_bear_desc">
+        Sveriges mest exklusiva jaktupplevelse. Björnjakt med plotthundar i den täta
+        norrlandsskogen kräver mod, uthållighet och skicklighet. Dennis har guidat
+        björnjakter i över 15 år och erbjuder en säker, professionell och
+        adrenalinfylld upplevelse.
+      </p>
+      <div class="hunt-card-price">18 500 <small>SEK / PERSON</small></div>
+      <div class="hunt-card-specs">
+        <span class="hunt-card-spec">Plotthundar</span>
+        <span class="hunt-card-spec">Premium-paket</span>
+        <span class="hunt-card-spec">Allt inkl.</span>
+        <span class="hunt-card-spec">Elevation: 200m&ndash;550m</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GALLERY STRIP ===== -->
+<div class="gallery-strip">
+  <img src="images/moose-calf.jpg" alt="Älgkalv">
+  <img src="images/campfire.jpg" alt="Lägereld">
+  <img src="images/dogs.png" alt="Jakthundar">
+</div>
+
+<!-- ===== 04 // UPPLEVELSEN ===== -->
+<section id="upplevelsen">
+  <div class="section-header reveal">
+    <span class="section-number" data-i18n="exp_num">04 // UPPLEVELSEN</span>
+    <h2 class="section-title" data-i18n="exp_title">Mer än en jakt</h2>
+    <div class="section-coord">BASPUNKT: ÅNGE // KAPACITET: 6 GÄSTER // STATUS: AKTIV</div>
+    <p class="section-subtitle" data-i18n="exp_sub">Allt du behöver för en komplett vildmarksupplevelse</p>
+  </div>
+
+  <div class="experience-grid stagger">
+    <div class="exp-card reveal">
+      <img class="exp-card-img" src="images/campfire.jpg" alt="Stuga vid sjö">
+      <div class="exp-card-body">
+        <span class="exp-card-label">04.1 // BOENDE</span>
+        <h3 data-i18n="exp_lodge_title">Genuint skogsboende</h3>
+        <p>
+          Övernatta i rustik men bekväm jaktstuga mitt i markerna. Vedeldad bastu,
+          fullt utrustat kök och sovplats för hela jaktlaget. Vakna till dimman
+          över myren och kaffet på spisen &mdash; så nära naturen du kan komma.
+        </p>
+      </div>
+    </div>
+
+    <div class="exp-card reveal">
+      <img class="exp-card-img" src="images/frost-moor.jpg" alt="Husmanskost">
+      <div class="exp-card-body">
+        <span class="exp-card-label">04.2 // MAT</span>
+        <h3 data-i18n="exp_food_title">Norrländsk husmanskost</h3>
+        <p>
+          Hemlagad mat med lokala råvaror. Renstek, kolbulle, syltade lingon
+          och nybakat bröd. Lunchen tillagas över öppen eld i skogen.
+          Kvällarna avslutas med viltgryta och gott snack om dagens jakt.
+        </p>
+      </div>
+    </div>
+
+    <div class="exp-card reveal">
+      <img class="exp-card-img" src="images/hero2.png" alt="Dennis som guide">
+      <div class="exp-card-body">
+        <span class="exp-card-label">04.3 // GUIDE</span>
+        <h3 data-i18n="exp_guide_title">Personlig guidning</h3>
+        <p>
+          Dennis finns med er under hela jakten &mdash; från planering till
+          genomförande. Med djup lokalkännedom och 25 års erfarenhet anpassar
+          han jakten efter ert jaktlag och rådande förhållanden. Säkerhet
+          och etik är alltid i fokus.
+        </p>
+      </div>
+    </div>
+
+    <div class="exp-card reveal">
+      <img class="exp-card-img" src="images/dogs.png" alt="Jakthundar">
+      <div class="exp-card-body">
+        <span class="exp-card-label">04.4 // HUNDAR</span>
+        <h3 data-i18n="exp_dogs_title">Vältränade jakthundar</h3>
+        <p>
+          Dennis egna hundar är navet i varje jakt. Från älghundar som driver
+          i miltals till stående fågelhundar som söker av myrarna &mdash;
+          varje hund är specialtränad för sin uppgift. Att se en duktig hund
+          arbeta är en upplevelse i sig.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 05 // OMDOMEN ===== -->
+<section id="omdomen">
+  <div class="section-header reveal">
+    <span class="section-number" data-i18n="rev_num">05 // FÄLTRAPPORTER</span>
+    <h2 class="section-title" data-i18n="rev_title">Vad gästerna säger</h2>
+    <div class="section-coord" data-i18n="rev_coord">DATAPUNKTER: 3 // KÄLLA: VERIFIERADE GÄSTER</div>
+    <p class="section-subtitle" data-i18n="rev_sub">Autentiska omdömen från jakter med Nordvilt</p>
+  </div>
+
+  <div class="reviews-grid stagger">
+    <div class="review-card reveal">
+      <div class="review-stars">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+      <p>
+        Helt fantastisk upplevelse. Dennis är en guide av gammalt snitt &mdash; kunnig,
+        lugn och med en otrolig känsla för skogen. Hundarna arbetade felfritt och
+        vi fick en fin älgtjur andra dagen. Boendet och maten var över förväntan.
+        Kommer definitivt tillbaka nästa höst.
+      </p>
+      <div class="review-author">
+        <div class="review-author-info">
+          <span class="review-author-name">Erik Lindström</span>
+          <span class="review-author-detail">Älgjakt // Oktober 2025</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card reveal">
+      <div class="review-stars">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+      <p>
+        Vi var ett sällskap på fyra som bokade fågeljakt. Vilken dag! Dennis satte oss
+        i perfekta positioner och hans hund Saga jobbade fantastiskt på myrarna.
+        Lunchen över öppen eld med nybakat tunnbröd var pricken över i:et.
+        Professionellt och genuint &mdash; kan inte rekommendera nog.
+      </p>
+      <div class="review-author">
+        <div class="review-author-info">
+          <span class="review-author-name">Magnus Bergqvist</span>
+          <span class="review-author-detail">Fågeljakt // September 2025</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card reveal">
+      <div class="review-stars">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+      <p>
+        Tredje året i rad vi jagar med Dennis och Nordvilt. Det säger nog allt.
+        Björnjakten var otroligt spännande och Dennis hanterade situationen med imponerande
+        lugn och professionalism. Plotthundarna är i toppklass. En unik upplevelse
+        som varje seriös jägare bör unna sig.
+      </p>
+      <div class="review-author">
+        <div class="review-author-info">
+          <span class="review-author-name">Hans-Olof Persson</span>
+          <span class="review-author-detail">Björnjakt // Augusti 2025</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 06 // KONTAKT ===== -->
+<section id="kontakt">
+  <div class="section-header reveal">
+    <span class="section-number" data-i18n="contact_num">06 // KOMMUNIKATION</span>
+    <h2 class="section-title" data-i18n="contact_title">Kontakt</h2>
+    <div class="section-coord" data-i18n="contact_coord">KANAL: ÖPPEN // SVARSTID: &lt; 24H</div>
+    <p class="section-subtitle" data-i18n="contact_sub">Boka din jakt eller ställ en fråga &mdash; vi svarar inom 24 timmar</p>
+  </div>
+
+  <div class="contact-grid">
+    <div class="reveal-left">
+      <div class="contact-info-item">
+        <div class="contact-info-label">OPERATÖR</div>
+        <div class="contact-info-value">Dennis Jonsson</div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-label">TELEFON</div>
+        <div class="contact-info-value"><a href="tel:+46701234567">070-123 45 67</a></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-label">E-POST</div>
+        <div class="contact-info-value"><a href="mailto:dennis@nordvilt.se">dennis@nordvilt.se</a></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-label">BASPOSITION</div>
+        <div class="contact-info-value">Ånge, Västernorrland</div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-label">KOORDINATER</div>
+        <div class="contact-info-value" style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;">N 62&deg;31'24" E 15&deg;39'18"</div>
+      </div>
+      <div style="margin-top:2rem;">
+        <div class="tac-mark">// SÄSONG: AUGUSTI &mdash; NOVEMBER //</div>
+        <div class="tac-mark" style="margin-top:0.3rem;">// BOKNING: REKOMMENDERAS 3 MÅN I FÖRVÄG //</div>
+      </div>
+    </div>
+
+    <form class="contact-form reveal-right" onsubmit="event.preventDefault(); alert('Tack! Vi återkommer inom kort.');">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">Namn</label>
+          <input type="text" id="name" name="name" placeholder="Ditt namn" required>
+        </div>
+        <div class="form-group">
+          <label for="phone">Telefon</label>
+          <input type="tel" id="phone" name="phone" placeholder="070-000 00 00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">E-post</label>
+        <input type="email" id="email" name="email" placeholder="din@email.se" required>
+      </div>
+      <div class="form-group">
+        <label for="hunt-type">Typ av jakt</label>
+        <select id="hunt-type" name="hunt-type" required>
+          <option value="" disabled selected>Välj jakttyp...</option>
+          <option value="algjakt">Älgjakt — 12 500 SEK</option>
+          <option value="fageljakt">Fågeljakt — 8 900 SEK</option>
+          <option value="hjortjakt">Hjortjakt — 9 500 SEK</option>
+          <option value="bjornjakt">Björnjakt — 18 500 SEK</option>
+          <option value="annat">Annat / Specialbokning</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="message">Meddelande</label>
+        <textarea id="message" name="message" placeholder="Berätta om ert jaktlag, önskemål och tidsperiod..."></textarea>
+      </div>
+      <button type="submit" class="btn-submit" data-i18n="form_submit">Skicka förfrågan</button>
+    </form>
+  </div>
+</section>
+
+</div><!-- /content-wrapper -->
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">NORDVILT</div>
+    <div class="footer-coords">N 62&deg;31' E 15&deg;39' // ÅNGE, SWEDEN // ELEVATION: 264M</div>
+    <div class="footer-legal">&copy; 2026 Nordvilt &mdash; Dennis Jonsson. Alla rättigheter förbehållna.</div>
+    <a href="#" onclick="event.preventDefault(); document.getElementById('loginOverlay').classList.add('open');" style="font-size:0.55rem; letter-spacing:0.15em; color:#c4a35a; opacity:0.35; text-decoration:none; transition: opacity 0.3s; text-transform:uppercase;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.35'">&#x2699; Admin</a>
+  </div>
+</footer>
+
+<!-- ADMIN LOGIN BUTTON -->
+<button class="admin-login-btn" onclick="document.getElementById('loginOverlay').classList.add('open')" title="Admin">&#x2699;</button>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <button class="login-close" onclick="document.getElementById('loginOverlay').classList.remove('open')">&times;</button>
+    <div class="login-box-header">Admin Login</div>
+    <div class="login-box-sub">// NORDVILT KONTROLLPANEL //</div>
+    <form onsubmit="return handleLogin(event)">
+      <div class="form-group">
+        <label>Användarnamn</label>
+        <input type="text" id="loginUser" placeholder="Användarnamn" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Lösenord</label>
+        <input type="password" id="loginPass" placeholder="Lösenord" autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn-submit">Logga in</button>
+      <div class="login-error" id="loginError">// FEL: OGILTIGT ANVÄNDARNAMN ELLER LÖSENORD //</div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== SCROLL ANIMATIONS ===== -->
+<script>
+// Admin login
+function handleLogin(e) {
+  e.preventDefault();
+  const u = document.getElementById('loginUser').value;
+  const p = document.getElementById('loginPass').value;
+  if (u === 'Dennis' && p === 'skitjakt2026') {
+    window.location.href = 'admin.html';
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+    setTimeout(() => { document.getElementById('loginError').style.display = 'none'; }, 3000);
+  }
+  return false;
+}
+
+// Close login on overlay click
+document.getElementById('loginOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .stagger');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -60px 0px'
+  });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Close mobile nav
+        document.querySelector('.nav-links').classList.remove('open');
+      }
+    });
+  });
+
+  // Nav background on scroll
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 100) {
+      nav.style.background = 'rgba(18, 21, 15, 0.97)';
+    } else {
+      nav.style.background = 'rgba(18, 21, 15, 0.92)';
+    }
+  });
+});
+
+// ===== LANGUAGE SYSTEM =====
+const translations = {
+  sv: {
+    nav_om: 'Om oss', nav_jakter: 'Jakter', nav_upplevelsen: 'Upplevelsen', nav_omdomen: 'Omdömen', nav_kontakt: 'Kontakt',
+    hero_class: '// TAKTISK BRIEFING // JAKT I NORRLAND //',
+    hero_sub: 'Guidad jakt i norra Sveriges vildmark',
+    hero_pos: 'POSITION', hero_exp: 'ERFARENHET', hero_exp_val: '25+ år', hero_terrain: 'TERRÄNG', hero_status: 'Operativ',
+    hero_cta: 'Boka din jakt',
+    about_num: '02 // OM OSS', about_sub: 'Guide \u2014 Jägare \u2014 Naturmänniska',
+    about_p1: 'Dennis Jonsson växte upp med skogen som lekplats och jakten som livsstil. Redan som ung följde han med sin far ut i de vidsträckta markerna kring Ånge, och det var där passionen för viltet och naturen tog fäste. Idag, med över 25 års erfarenhet som jägare och jaktguide, delar Dennis sin djupa kunskap om norrländsk natur med gäster från hela Sverige och Europa.',
+    about_p2: 'Nordvilt erbjuder en genuin jaktupplevelse där respekt för naturen och viltet alltid står i centrum. Dennis driver sina jakter med egna, vältränade hundar över marker som han känner lika väl som sin egen bakgård. Varje jakt planeras noggrant med hänsyn till terräng, väder och viltets rörelsemönster.',
+    about_p3: 'Här handlar det inte bara om skottet \u2014 det handlar om helheten. Tystnaden i gryningsljuset, spåren i frosten, hundarna som arbetar, och kvällarna vid elden. Det är den upplevelsen som får gäster att komma tillbaka år efter år.',
+    stat_years: 'År som guide', stat_ha: 'Hektar jaktmark', stat_guests: 'Nöjda gäster', stat_dogs: 'Tränade jakthundar',
+    hunts_num: '03 // JAKTPROGRAM', hunts_title: 'Våra jakter', hunts_sub: 'Välj din jaktupplevelse \u2014 alla jakter inkluderar guide, hundar och logi',
+    hunt_moose: 'Älgjakt', hunt_moose_days: '2\u20133 dagar', hunt_moose_group: 'Grupp: 2\u20136 pers',
+    hunt_moose_desc: 'Klassisk norrländsk älgjakt med löshund i vidsträckt skogsmark. Dennis guidar er genom marker med stark älgstam och hjälper er att komma i skottläge. Jakten bedrivs med vältränade älghundar som arbetar självständigt i terrängen.',
+    hunt_bird: 'Fågeljakt', hunt_bird_days: '1\u20132 dagar', hunt_bird_group: 'Grupp: 2\u20134 pers',
+    hunt_bird_desc: 'Jakt på skogsfågel \u2014 tjäder, orre och ripa \u2014 i orörd fjällnära skog och myrmark. Med stående fågelhund söker vi av de bästa biotoperna i det norrländska landskapet. En jakt som kräver kondition men belönar med oförglömliga upplevelser.',
+    hunt_deer: 'Hjortjakt', hunt_deer_days: '2 dagar', hunt_deer_group: 'Grupp: 2\u20134 pers',
+    hunt_deer_desc: 'Spännande jakt på kronhjort i det norrländska skogslandskapet. Vi jagar med smygning och vak vid utfodringsplatser under den magiska höstperioden. Dennis kunskap om hjortens vanor ger er bästa möjliga förutsättningar för en lyckad jakt.',
+    hunt_bear: 'Björnjakt', hunt_bear_days: '3\u20135 dagar', hunt_bear_group: 'Grupp: 2\u20134 pers',
+    hunt_bear_desc: 'Sveriges mest exklusiva jaktupplevelse. Björnjakt med plotthundar i den täta norrlandsskogen kräver mod, uthållighet och skicklighet. Dennis har guidat björnjakter i över 15 år och erbjuder en säker, professionell och adrenalinfylld upplevelse.',
+    exp_num: '04 // UPPLEVELSEN', exp_title: 'Mer än en jakt', exp_sub: 'Allt du behöver för en komplett vildmarksupplevelse',
+    exp_lodge_title: 'Genuint skogsboende', exp_food_title: 'Norrländsk husmanskost', exp_guide_title: 'Personlig guidning', exp_dogs_title: 'Vältränade jakthundar',
+    rev_num: '05 // FÄLTRAPPORTER', rev_title: 'Vad gästerna säger', rev_coord: 'DATAPUNKTER: 3 // KÄLLA: VERIFIERADE GÄSTER', rev_sub: 'Autentiska omdömen från jakter med Nordvilt',
+    contact_num: '06 // KOMMUNIKATION', contact_title: 'Kontakt', contact_coord: 'KANAL: ÖPPEN // SVARSTID: < 24H', contact_sub: 'Boka din jakt eller ställ en fråga \u2014 vi svarar inom 24 timmar',
+    form_submit: 'Skicka förfrågan'
+  },
+  en: {
+    nav_om: 'About', nav_jakter: 'Hunts', nav_upplevelsen: 'Experience', nav_omdomen: 'Reviews', nav_kontakt: 'Contact',
+    hero_class: '// TACTICAL BRIEFING // HUNTING IN NORRLAND //',
+    hero_sub: 'Guided hunting in northern Sweden\'s wilderness',
+    hero_pos: 'POSITION', hero_exp: 'EXPERIENCE', hero_exp_val: '25+ years', hero_terrain: 'TERRAIN', hero_status: 'Operational',
+    hero_cta: 'Book your hunt',
+    about_num: '02 // ABOUT US', about_sub: 'Guide \u2014 Hunter \u2014 Naturalist',
+    about_p1: 'Dennis Jonsson grew up with the forest as his playground and hunting as a way of life. As a young boy he followed his father into the vast wilderness around Ånge, and it was there his passion for wildlife and nature took root. Today, with over 25 years of experience as a hunter and hunting guide, Dennis shares his deep knowledge of northern Swedish nature with guests from across Sweden and Europe.',
+    about_p2: 'Nordvilt offers a genuine hunting experience where respect for nature and wildlife is always at the center. Dennis runs his hunts with his own well-trained dogs across terrain he knows as well as his own backyard. Every hunt is carefully planned with regard to terrain, weather and wildlife movement patterns.',
+    about_p3: 'It\'s not just about the shot \u2014 it\'s about the whole experience. The silence in the dawn light, the tracks in the frost, the dogs working, and the evenings by the fire. That is the experience that keeps guests coming back year after year.',
+    stat_years: 'Years as guide', stat_ha: 'Hectares of hunting ground', stat_guests: 'Satisfied guests', stat_dogs: 'Trained hunting dogs',
+    hunts_num: '03 // HUNT PROGRAM', hunts_title: 'Our hunts', hunts_sub: 'Choose your hunting experience \u2014 all hunts include guide, dogs and accommodation',
+    hunt_moose: 'Moose hunting', hunt_moose_days: '2\u20133 days', hunt_moose_group: 'Group: 2\u20136 ppl',
+    hunt_moose_desc: 'Classic northern Swedish moose hunting with loose dogs in vast forest terrain. Dennis guides you through areas with strong moose populations and helps you get into shooting position. The hunt is conducted with well-trained moose dogs that work independently in the terrain.',
+    hunt_bird: 'Bird hunting', hunt_bird_days: '1\u20132 days', hunt_bird_group: 'Group: 2\u20134 ppl',
+    hunt_bird_desc: 'Hunting for forest birds \u2014 capercaillie, black grouse and ptarmigan \u2014 in untouched mountain-near forest and moorland. With pointing dogs we search the best biotopes in the northern landscape. A hunt that demands stamina but rewards with unforgettable experiences.',
+    hunt_deer: 'Deer hunting', hunt_deer_days: '2 days', hunt_deer_group: 'Group: 2\u20134 ppl',
+    hunt_deer_desc: 'Exciting hunting for red deer in the northern Swedish forest landscape. We hunt by stalking and sitting at feeding stations during the magical autumn period. Dennis\' knowledge of deer habits gives you the best possible chances for a successful hunt.',
+    hunt_bear: 'Bear hunting', hunt_bear_days: '3\u20135 days', hunt_bear_group: 'Group: 2\u20134 ppl',
+    hunt_bear_desc: 'Sweden\'s most exclusive hunting experience. Bear hunting with Plott hounds in the dense northern forest requires courage, endurance and skill. Dennis has guided bear hunts for over 15 years and offers a safe, professional and adrenaline-filled experience.',
+    exp_num: '04 // THE EXPERIENCE', exp_title: 'More than a hunt', exp_sub: 'Everything you need for a complete wilderness experience',
+    exp_lodge_title: 'Genuine forest lodge', exp_food_title: 'Traditional Nordic cuisine', exp_guide_title: 'Personal guidance', exp_dogs_title: 'Well-trained hunting dogs',
+    rev_num: '05 // FIELD REPORTS', rev_title: 'What guests say', rev_coord: 'DATA POINTS: 3 // SOURCE: VERIFIED GUESTS', rev_sub: 'Authentic reviews from hunts with Nordvilt',
+    contact_num: '06 // COMMUNICATION', contact_title: 'Contact', contact_coord: 'CHANNEL: OPEN // RESPONSE TIME: < 24H', contact_sub: 'Book your hunt or ask a question \u2014 we respond within 24 hours',
+    form_submit: 'Send inquiry'
+  },
+  de: {
+    nav_om: 'Über uns', nav_jakter: 'Jagden', nav_upplevelsen: 'Erlebnis', nav_omdomen: 'Bewertungen', nav_kontakt: 'Kontakt',
+    hero_class: '// TAKTISCHES BRIEFING // JAGD IN NORRLAND //',
+    hero_sub: 'Geführte Jagd in Nordschwedens Wildnis',
+    hero_pos: 'POSITION', hero_exp: 'ERFAHRUNG', hero_exp_val: '25+ Jahre', hero_terrain: 'GELÄNDE', hero_status: 'Einsatzbereit',
+    hero_cta: 'Jagd buchen',
+    about_num: '02 // ÜBER UNS', about_sub: 'Guide \u2014 Jäger \u2014 Naturmensch',
+    about_p1: 'Dennis Jonsson wuchs mit dem Wald als Spielplatz und der Jagd als Lebensweise auf. Schon als junger Bursche begleitete er seinen Vater in die weiten Wälder rund um Ånge, und dort entstand seine Leidenschaft für Wild und Natur. Heute, mit über 25 Jahren Erfahrung als Jäger und Jagdführer, teilt Dennis sein tiefes Wissen über die nordschwedische Natur mit Gästen aus ganz Schweden und Europa.',
+    about_p2: 'Nordvilt bietet ein authentisches Jagderlebnis, bei dem der Respekt vor Natur und Wild immer im Mittelpunkt steht. Dennis führt seine Jagden mit eigenen, gut ausgebildeten Hunden über Gelände, das er so gut kennt wie seinen eigenen Garten. Jede Jagd wird sorgfältig geplant unter Berücksichtigung von Gelände, Wetter und Wildbewegungen.',
+    about_p3: 'Es geht nicht nur um den Schuss \u2014 es geht um das Gesamterlebnis. Die Stille im Morgenlicht, die Spuren im Frost, die arbeitenden Hunde und die Abende am Feuer. Das ist das Erlebnis, das Gäste Jahr für Jahr wiederkommen lässt.',
+    stat_years: 'Jahre als Guide', stat_ha: 'Hektar Jagdgebiet', stat_guests: 'Zufriedene Gäste', stat_dogs: 'Ausgebildete Jagdhunde',
+    hunts_num: '03 // JAGDPROGRAMM', hunts_title: 'Unsere Jagden', hunts_sub: 'Wählen Sie Ihr Jagderlebnis \u2014 alle Jagden inkl. Guide, Hunde und Unterkunft',
+    hunt_moose: 'Elchjagd', hunt_moose_days: '2\u20133 Tage', hunt_moose_group: 'Gruppe: 2\u20136 Pers.',
+    hunt_moose_desc: 'Klassische nordschwedische Elchjagd mit freilaufenden Hunden in weitläufigem Waldgebiet. Dennis führt Sie durch Gebiete mit starkem Elchbestand und hilft Ihnen in Schussposition zu kommen. Die Jagd wird mit gut ausgebildeten Elchhunden durchgeführt, die selbstständig im Gelände arbeiten.',
+    hunt_bird: 'Vogeljagd', hunt_bird_days: '1\u20132 Tage', hunt_bird_group: 'Gruppe: 2\u20134 Pers.',
+    hunt_bird_desc: 'Jagd auf Waldvögel \u2014 Auerhahn, Birkhuhn und Schneehuhn \u2014 in unberührtem bergnahen Wald und Moorland. Mit Vorstehhunden durchsuchen wir die besten Biotope der nordschwedischen Landschaft. Eine Jagd, die Kondition erfordert, aber mit unvergesslichen Erlebnissen belohnt.',
+    hunt_deer: 'Hirschjagd', hunt_deer_days: '2 Tage', hunt_deer_group: 'Gruppe: 2\u20134 Pers.',
+    hunt_deer_desc: 'Spannende Jagd auf Rothirsch in der nordschwedischen Waldlandschaft. Wir jagen durch Pirschen und Ansitz an Fütterungsstellen während der magischen Herbstperiode. Dennis\' Kenntnis der Hirschgewohnheiten gibt Ihnen die bestmöglichen Voraussetzungen für eine erfolgreiche Jagd.',
+    hunt_bear: 'Bärenjagd', hunt_bear_days: '3\u20135 Tage', hunt_bear_group: 'Gruppe: 2\u20134 Pers.',
+    hunt_bear_desc: 'Schwedens exklusivstes Jagderlebnis. Bärenjagd mit Plotthunden im dichten Norrlandwald erfordert Mut, Ausdauer und Geschick. Dennis hat über 15 Jahre Bärenjagden geführt und bietet ein sicheres, professionelles und adrenalingeladenes Erlebnis.',
+    exp_num: '04 // DAS ERLEBNIS', exp_title: 'Mehr als eine Jagd', exp_sub: 'Alles was Sie für ein komplettes Wildniserlebnis brauchen',
+    exp_lodge_title: 'Authentische Waldunterkunft', exp_food_title: 'Nordische Hausmannskost', exp_guide_title: 'Persönliche Führung', exp_dogs_title: 'Ausgebildete Jagdhunde',
+    rev_num: '05 // FELDBERICHTE', rev_title: 'Was Gäste sagen', rev_coord: 'DATENPUNKTE: 3 // QUELLE: VERIFIZIERTE GÄSTE', rev_sub: 'Authentische Bewertungen von Jagden mit Nordvilt',
+    contact_num: '06 // KOMMUNIKATION', contact_title: 'Kontakt', contact_coord: 'KANAL: OFFEN // ANTWORTZEIT: < 24H', contact_sub: 'Buchen Sie Ihre Jagd oder stellen Sie eine Frage \u2014 wir antworten innerhalb von 24 Stunden',
+    form_submit: 'Anfrage senden'
+  }
+};
+
+function setLang(lang) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+  document.documentElement.lang = lang === 'sv' ? 'sv' : lang === 'de' ? 'de' : 'en';
+
+  const t = translations[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+}
+</script>
+
+</body>
+</html>
