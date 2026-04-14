@@ -731,6 +731,180 @@ section {
 body.preview-mode nav { top: 38px; }
 body.preview-mode .hero { margin-top: 38px; }
 
+/* ===== WYSIWYG EDIT MODE ===== */
+.edit-toolbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #1a1c17;
+  border-bottom: 2px solid #e87a2e;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.5rem;
+  gap: 1rem;
+  font-family: 'Chakra Petch', sans-serif;
+}
+
+.edit-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.edit-toolbar-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #e87a2e;
+  animation: editPulse 1.5s infinite;
+}
+
+@keyframes editPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.edit-toolbar-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #e87a2e;
+}
+
+.edit-toolbar-hint {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: rgba(212,201,168,0.5);
+  text-transform: uppercase;
+}
+
+.edit-toolbar-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-toolbar-btns button,
+.edit-toolbar-btns a {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.45rem 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.edit-btn-save {
+  background: #4CAF50;
+  color: white;
+}
+.edit-btn-save:hover { background: #66BB6A; }
+
+.edit-btn-undo {
+  background: transparent;
+  color: #e87a2e;
+  border: 1px solid rgba(232,122,46,0.3) !important;
+}
+.edit-btn-undo:hover { background: rgba(232,122,46,0.1); }
+
+.edit-btn-back {
+  background: transparent;
+  color: #c4a35a;
+  border: 1px solid rgba(196,163,90,0.2) !important;
+}
+.edit-btn-back:hover { background: rgba(196,163,90,0.1); }
+
+body.edit-mode nav { top: 44px; }
+body.edit-mode .hero { padding-top: calc(64px + 44px); }
+
+/* Editable elements */
+body.edit-mode [data-i18n] {
+  cursor: pointer;
+  position: relative;
+  transition: outline 0.15s, background 0.15s;
+  outline: 1px dashed transparent;
+  outline-offset: 4px;
+}
+
+body.edit-mode [data-i18n]:hover {
+  outline-color: rgba(232,122,46,0.4);
+  background: rgba(232,122,46,0.04);
+}
+
+body.edit-mode [data-i18n]:focus,
+body.edit-mode [data-i18n].editing {
+  outline: 2px solid #e87a2e;
+  outline-offset: 4px;
+  background: rgba(232,122,46,0.08);
+}
+
+body.edit-mode [data-i18n]::after {
+  content: '✎';
+  position: absolute;
+  top: -0.6rem;
+  right: -0.6rem;
+  width: 18px;
+  height: 18px;
+  background: #e87a2e;
+  color: #12150f;
+  font-size: 0.55rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+body.edit-mode [data-i18n]:hover::after { display: flex; }
+
+/* Editable images */
+body.edit-mode .content-wrapper img {
+  cursor: pointer;
+  transition: outline 0.15s;
+  outline: 2px dashed transparent;
+  outline-offset: 2px;
+}
+
+body.edit-mode .content-wrapper img:hover {
+  outline-color: rgba(196,163,90,0.5);
+}
+
+body.edit-mode .img-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(18,21,15,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  pointer-events: none;
+  z-index: 5;
+}
+
+body.edit-mode .img-edit-wrapper:hover .img-edit-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.img-edit-overlay-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  border: 1px solid rgba(196,163,90,0.4);
+  padding: 0.6rem 1.2rem;
+  background: rgba(18,21,15,0.8);
+}
+
 /* ===== REVIEWS / OMDOMEN ===== */
 .reviews-grid {
   display: grid;
@@ -1570,6 +1744,24 @@ footer {
   </div>
 </footer>
 
+<!-- EDIT TOOLBAR (only shown in edit mode) -->
+<div class="edit-toolbar" id="editToolbar" style="display:none;">
+  <div class="edit-toolbar-left">
+    <div class="edit-toolbar-dot"></div>
+    <span class="edit-toolbar-label">Redigeringsläge</span>
+    <span class="edit-toolbar-hint">Klicka på text eller bilder för att redigera</span>
+  </div>
+  <div class="edit-toolbar-btns">
+    <button class="edit-btn-save" onclick="editSave()">Spara ändringar</button>
+    <button class="edit-btn-undo" onclick="editUndo()">Ångra allt</button>
+    <a class="edit-btn-back" href="admin.html">Admin-panel</a>
+    <a class="edit-btn-back" href="index.html">Avsluta redigering</a>
+  </div>
+</div>
+
+<!-- Hidden file input for image replacement -->
+<input type="file" id="editImagePicker" accept="image/*" style="display:none;">
+
 <!-- PREVIEW BAR (only shown in preview mode) -->
 <div class="preview-bar" id="previewBar" style="display:none;">
   <span>FÖRHANDSGRANSKNING — ändringar är inte sparade</span>
@@ -1814,6 +2006,226 @@ function undoPreview() {
   alert('Ändringar ångrade. Tillbaka till senast sparade version.');
   window.location.href = window.location.pathname;
 }
+
+// ===== WYSIWYG EDIT MODE =====
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('edit')) return;
+
+  document.body.classList.add('edit-mode');
+  document.getElementById('editToolbar').style.display = 'flex';
+
+  // Hide login button and preview bar in edit mode
+  const loginBtn = document.querySelector('.admin-login-btn');
+  if (loginBtn) loginBtn.style.display = 'none';
+
+  // Track which image we're replacing
+  let editingImageEl = null;
+
+  // Make all data-i18n elements editable on click
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Remove editing class from others
+      document.querySelectorAll('.editing').forEach(x => {
+        if (x !== el) { x.classList.remove('editing'); x.contentEditable = 'false'; }
+      });
+      el.contentEditable = 'true';
+      el.classList.add('editing');
+      el.focus();
+    });
+
+    el.addEventListener('blur', function() {
+      el.classList.remove('editing');
+      el.contentEditable = 'false';
+    });
+
+    // Prevent enter from creating divs in single-line elements
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !el.matches('p, textarea')) {
+        e.preventDefault();
+        el.blur();
+      }
+    });
+  });
+
+  // Also make stat values, prices, review text, and other non-i18n text editable
+  document.querySelectorAll('.about-stat-value, .hunt-card-price, .review-card p, .review-author-name, .review-author-detail, .contact-info-value').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      el.contentEditable = 'true';
+      el.classList.add('editing');
+      el.focus();
+    });
+    el.addEventListener('blur', function() {
+      el.classList.remove('editing');
+      el.contentEditable = 'false';
+    });
+  });
+
+  // Make images clickable to replace
+  document.querySelectorAll('.content-wrapper img').forEach(img => {
+    // Wrap in a relative container for overlay
+    const wrapper = document.createElement('div');
+    wrapper.className = 'img-edit-wrapper';
+    wrapper.style.position = 'relative';
+    wrapper.style.display = img.style.display || 'block';
+    img.parentNode.insertBefore(wrapper, img);
+    wrapper.appendChild(img);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'img-edit-overlay';
+    overlay.innerHTML = '<span class="img-edit-overlay-label">Klicka för att byta bild</span>';
+    wrapper.appendChild(overlay);
+
+    overlay.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      editingImageEl = img;
+      document.getElementById('editImagePicker').click();
+    });
+  });
+
+  // Handle image file selection
+  document.getElementById('editImagePicker').addEventListener('change', function() {
+    if (!this.files[0] || !editingImageEl) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      editingImageEl.src = e.target.result;
+      editingImageEl = null;
+    };
+    reader.readAsDataURL(this.files[0]);
+    this.value = '';
+  });
+
+  // SAVE — gather all edited content and save to localStorage
+  window.editSave = function() {
+    const data = { images: {}, gallery: [] };
+
+    // Gather data-i18n text
+    const i18nToAdmin = {
+      hero_sub: 'hero_sub', hero_class: 'hero_class', hero_status: 'hero_status',
+      hero_cta: 'hero_cta', hero_exp_val: 'hero_exp_val',
+      about_sub: 'about_sub', about_p1: 'about_p1', about_p2: 'about_p2', about_p3: 'about_p3',
+      stat_years: 'stat1_label', stat_ha: 'stat2_label', stat_guests: 'stat3_label', stat_dogs: 'stat4_label',
+      hunt_moose: null, hunt_moose_desc: null, hunt_bird: null, hunt_bird_desc: null,
+      hunt_deer: null, hunt_deer_desc: null, hunt_bear: null, hunt_bear_desc: null,
+      exp_lodge_title: 'exp_t1', exp_food_title: 'exp_t2', exp_guide_title: 'exp_t3', exp_dogs_title: 'exp_t4',
+      hunts_title: 'hunts_title', hunts_sub: 'hunts_sub',
+      exp_title: 'exp_title', exp_sub: 'exp_sub',
+      rev_title: 'rev_title', rev_sub: 'rev_sub',
+      contact_title: 'contact_title', contact_sub: 'contact_sub',
+    };
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const adminKey = i18nToAdmin[key];
+      if (adminKey) {
+        data[adminKey] = el.textContent.trim();
+      }
+    });
+
+    // Gather hunt card data
+    data.hunts = {};
+    const huntCards = document.querySelectorAll('.hunt-card');
+    const huntMap = ['0','1','2','3'];
+    const huntNameKeys = ['hunt_moose','hunt_bird','hunt_deer','hunt_bear'];
+    const huntDescKeys = ['hunt_moose_desc','hunt_bird_desc','hunt_deer_desc','hunt_bear_desc'];
+    const huntDayKeys = ['hunt_moose_days','hunt_bird_days','hunt_deer_days','hunt_bear_days'];
+    const huntGroupKeys = ['hunt_moose_group','hunt_bird_group','hunt_deer_group','hunt_bear_group'];
+
+    huntCards.forEach((card, i) => {
+      if (i > 3) return;
+      const h = huntMap[i];
+      data.hunts[h] = {};
+      const nameEl = card.querySelector(`[data-i18n="${huntNameKeys[i]}"]`);
+      const descEl = card.querySelector(`[data-i18n="${huntDescKeys[i]}"]`);
+      const dayEl = card.querySelector(`[data-i18n="${huntDayKeys[i]}"]`);
+      const groupEl = card.querySelector(`[data-i18n="${huntGroupKeys[i]}"]`);
+      const priceEl = card.querySelector('.hunt-card-price');
+      if (nameEl) data.hunts[h].name = nameEl.textContent.trim();
+      if (descEl) data.hunts[h].desc = descEl.textContent.trim();
+      if (dayEl) data.hunts[h].days = dayEl.textContent.trim();
+      if (groupEl) data.hunts[h].group = groupEl.textContent.trim();
+      if (priceEl) {
+        const priceText = priceEl.textContent.replace(/SEK.*|\/.*$/gi, '').trim();
+        data.hunts[h].price = priceText;
+      }
+    });
+
+    // Gather stat values
+    const statEls = document.querySelectorAll('.about-stat-value');
+    if (statEls[0]) data.stat1_val = statEls[0].textContent.trim();
+    if (statEls[1]) data.stat2_val = statEls[1].textContent.trim();
+    if (statEls[2]) data.stat3_val = statEls[2].textContent.trim();
+    if (statEls[3]) data.stat4_val = statEls[3].textContent.trim();
+
+    // Gather reviews
+    const revNames = document.querySelectorAll('.review-author-name');
+    const revDetails = document.querySelectorAll('.review-author-detail');
+    const revTexts = document.querySelectorAll('.review-card p');
+    for (let i = 0; i < 3; i++) {
+      if (revNames[i]) data[`rev${i+1}_name`] = revNames[i].textContent.trim();
+      if (revDetails[i]) data[`rev${i+1}_detail`] = revDetails[i].textContent.trim();
+      if (revTexts[i]) data[`rev${i+1}_text`] = revTexts[i].textContent.trim();
+    }
+
+    // Gather contact info
+    document.querySelectorAll('.contact-info-value').forEach(el => {
+      const text = el.textContent.trim();
+      if (text.match(/07\d/)) data.contact_phone = text;
+      else if (text.includes('@')) data.contact_email = text;
+      else if (text.includes('Ånge') || text.includes('ånge') || text.includes(',')) data.contact_place = text;
+    });
+
+    // Gather changed images (base64 ones)
+    const imgMap = {
+      'images/hero.png': 'hero', 'images/portrait.png': 'portrait',
+      'images/moose.png': 'moose', 'images/dogs.png': 'dogs',
+      'images/campfire.jpg': 'campfire', 'images/frost-moor.jpg': 'frost',
+    };
+    document.querySelectorAll('.content-wrapper img').forEach(img => {
+      if (img.src.startsWith('data:')) {
+        // Find which image this was originally
+        const origSrc = img.getAttribute('data-orig-src') || '';
+        for (const [path, key] of Object.entries(imgMap)) {
+          if (origSrc.includes(path)) {
+            data.images[key] = img.src;
+            break;
+          }
+        }
+        // If no match found, store by current position
+        if (Object.keys(data.images).length === 0) {
+          data.images['edited_' + Math.random().toString(36).substr(2,5)] = img.src;
+        }
+      }
+    });
+
+    // Preserve gallery from existing saved data
+    try {
+      const existing = JSON.parse(localStorage.getItem('nordvilt_admin') || '{}');
+      if (existing.gallery) data.gallery = existing.gallery;
+    } catch(e) {}
+
+    localStorage.setItem('nordvilt_admin', JSON.stringify(data));
+    alert('Ändringar sparade!');
+    window.location.href = window.location.pathname; // reload without ?edit
+  };
+
+  // UNDO — revert to last saved and reload
+  window.editUndo = function() {
+    if (!confirm('Är du säker? Alla osparade ändringar försvinner.')) return;
+    window.location.href = window.location.pathname;
+  };
+
+  // Store original src for image tracking
+  document.querySelectorAll('.content-wrapper img').forEach(img => {
+    img.setAttribute('data-orig-src', img.getAttribute('src'));
+  });
+})();
 
 // ===== LANGUAGE SYSTEM =====
 const translations = {
