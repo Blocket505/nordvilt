@@ -167,6 +167,40 @@ body {
 
 .sidebar-actions { position: relative; }
 
+/* GALLERY ITEMS */
+.gallery-thumb {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  border: 1px solid rgba(196,163,90,0.1);
+}
+
+.gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-thumb-remove {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 24px;
+  height: 24px;
+  background: rgba(232,50,50,0.85);
+  color: white;
+  border: none;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gallery-thumb:hover .gallery-thumb-remove { opacity: 1; }
+
 /* MAIN */
 .main {
   margin-left: 260px;
@@ -449,12 +483,14 @@ body {
     <a href="#reviews-edit" onclick="setActive(this)"><span class="nav-icon">&#x2B50;</span> Omdömen <span class="nav-num">05</span></a>
     <a href="#contact-edit" onclick="setActive(this)"><span class="nav-icon">&#x1F4DE;</span> Kontakt <span class="nav-num">06</span></a>
     <a href="#images-edit" onclick="setActive(this)"><span class="nav-icon">&#x1F4F7;</span> Bilder <span class="nav-num">07</span></a>
-    <a href="#translations-edit" onclick="setActive(this)"><span class="nav-icon">&#x1F310;</span> Språk <span class="nav-num">08</span></a>
+    <a href="#gallery-edit" onclick="setActive(this)"><span class="nav-icon">&#x1F5BC;</span> Galleri <span class="nav-num">08</span></a>
+    <a href="#translations-edit" onclick="setActive(this)"><span class="nav-icon">&#x1F310;</span> Språk <span class="nav-num">09</span></a>
   </nav>
   <div class="sidebar-actions">
     <button class="btn-save" id="saveBtn" onclick="saveChanges()">&#x1F4BE; Spara ändringar</button>
     <span class="unsaved-dot" id="unsavedDot"></span>
-    <button class="btn-preview" onclick="openPreview()">&#x1F441; Förhandsgranska</button>
+    <button class="btn-preview" onclick="openPreview()">&#x1F441; Förhandsgranska (utan att spara)</button>
+    <button class="btn-preview" onclick="undoChanges()" style="color:#e87a2e; border-color:rgba(232,122,46,0.3);">&#x21A9; Ångra ändringar</button>
     <button class="btn-export" onclick="exportSite()">&#x2B07; Exportera hemsida</button>
     <a href="index.html" class="btn-preview" style="margin-top:0.5rem; display:block; text-align:center;">&#x2190; Tillbaka till hemsidan</a>
   </div>
@@ -734,7 +770,23 @@ body {
     </div>
   </div>
 
-  <!-- 08 SPRÅK -->
+  <!-- 08 GALLERI -->
+  <div class="admin-section" id="gallery-edit">
+    <div class="section-head">
+      <span class="section-num">08 //</span>
+      <span class="section-name">Galleri</span>
+    </div>
+    <p style="font-size:0.7rem; opacity:0.5; margin-bottom:1.5rem;">Ladda upp bilder som visas i galleriet på hemsidan. Klicka ✕ för att ta bort en bild.</p>
+
+    <div class="img-upload" style="margin-bottom:1.5rem;">
+      <input type="file" accept="image/*" multiple onchange="handleGalleryUpload(this)">
+      <div class="img-upload-label">+ Lägg till bilder i galleriet (välj en eller flera)</div>
+    </div>
+
+    <div id="gallery-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.75rem;"></div>
+  </div>
+
+  <!-- 09 SPRÅK -->
   <div class="admin-section" id="translations-edit">
     <div class="section-head">
       <span class="section-num">08 //</span>
@@ -807,16 +859,61 @@ function handleImage(input, key) {
     const preview = document.getElementById('preview-' + key);
     preview.src = e.target.result;
     preview.classList.remove('empty');
-    saveToLocal();
+    markUnsaved();
     showToast('Bild uppladdad: ' + key);
   };
   reader.readAsDataURL(file);
 }
 
-// ===== AUTO-SAVE TO LOCALSTORAGE =====
+// ===== GALLERY HANDLING =====
+let galleryImages = [];
+
+function handleGalleryUpload(input) {
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      galleryImages.push(e.target.result);
+      loaded++;
+      if (loaded === files.length) {
+        renderGalleryGrid();
+        markUnsaved();
+        showToast(files.length + ' bild(er) tillagda i galleriet');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removeGalleryImage(idx) {
+  galleryImages.splice(idx, 1);
+  renderGalleryGrid();
+  markUnsaved();
+  showToast('Bild borttagen från galleriet');
+}
+
+function renderGalleryGrid() {
+  const grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+  if (galleryImages.length === 0) {
+    grid.innerHTML = '<p style="font-size:0.65rem; opacity:0.4; grid-column:1/-1;">Inga bilder i galleriet ännu. Ladda upp bilder ovan.</p>';
+    return;
+  }
+  grid.innerHTML = galleryImages.map((src, i) =>
+    `<div class="gallery-thumb">
+      <img src="${src}" alt="Galleri ${i+1}">
+      <button class="gallery-thumb-remove" onclick="removeGalleryImage(${i})" title="Ta bort">&times;</button>
+    </div>`
+  ).join('');
+}
+
+// ===== DATA GATHER & SAVE =====
 function gatherData() {
-  const data = { images: imageStore };
+  const data = { images: imageStore, gallery: galleryImages };
   document.querySelectorAll('.main input, .main textarea, .main select').forEach(el => {
+    if (el.type === 'file') return;
     if (el.id) data[el.id] = el.value;
     if (el.dataset.hunt !== undefined) {
       if (!data.hunts) data.hunts = {};
@@ -828,14 +925,13 @@ function gatherData() {
   return data;
 }
 
-function saveToLocal() {
-  localStorage.setItem('nordvilt_admin', JSON.stringify(gatherData()));
-  document.getElementById('save-status').textContent = 'SPARAT: ' + new Date().toLocaleTimeString('sv-SE');
+function saveToStorage(key) {
+  localStorage.setItem(key || 'nordvilt_admin', JSON.stringify(gatherData()));
 }
 
 function loadFromLocal() {
   const raw = localStorage.getItem('nordvilt_admin');
-  if (!raw) return;
+  if (!raw) { renderGalleryGrid(); return; }
   try {
     const data = JSON.parse(raw);
     Object.keys(data).forEach(key => {
@@ -845,6 +941,10 @@ function loadFromLocal() {
           const prev = document.getElementById('preview-' + ik);
           if (prev) { prev.src = data.images[ik]; prev.classList.remove('empty'); }
         });
+        return;
+      }
+      if (key === 'gallery') {
+        galleryImages = data.gallery || [];
         return;
       }
       if (key === 'hunts') {
@@ -857,36 +957,39 @@ function loadFromLocal() {
         return;
       }
       const el = document.getElementById(key);
-      if (el) el.value = data[key];
+      if (el && el.type !== 'file') el.value = data[key];
     });
-  } catch(e) { console.error('Load error', e); }
+    renderGalleryGrid();
+  } catch(e) { console.error('Load error', e); renderGalleryGrid(); }
 }
 
-// Track unsaved changes
+// ===== UNSAVED CHANGES TRACKING =====
 let hasUnsaved = false;
 
 function markUnsaved() {
   hasUnsaved = true;
   document.getElementById('unsavedDot').style.display = 'block';
-  document.getElementById('saveBtn').textContent = '💾 Spara ändringar *';
+  document.getElementById('saveBtn').textContent = '\u{1F4BE} Spara ändringar *';
   document.getElementById('save-status').textContent = 'OSPARADE ÄNDRINGAR';
   document.getElementById('save-status').style.color = '#e87a2e';
 }
 
-document.addEventListener('input', () => { markUnsaved(); });
+document.addEventListener('input', (e) => {
+  if (e.target.type !== 'file') markUnsaved();
+});
 
 function saveChanges() {
-  saveToLocal();
+  saveToStorage('nordvilt_admin');
   hasUnsaved = false;
   document.getElementById('unsavedDot').style.display = 'none';
   const btn = document.getElementById('saveBtn');
-  btn.textContent = '✓ SPARAT!';
+  btn.textContent = '\u2713 SPARAT!';
   btn.classList.add('saved');
   document.getElementById('save-status').textContent = 'SPARAT: ' + new Date().toLocaleTimeString('sv-SE');
   document.getElementById('save-status').style.color = '#4CAF50';
-  showToast('✓ Alla ändringar sparade!');
+  showToast('\u2713 Alla ändringar sparade!');
   setTimeout(() => {
-    btn.textContent = '💾 Spara ändringar';
+    btn.textContent = '\u{1F4BE} Spara ändringar';
     btn.classList.remove('saved');
   }, 2000);
 }
@@ -902,12 +1005,25 @@ window.addEventListener('beforeunload', (e) => {
 // Load saved data on start
 loadFromLocal();
 
-// ===== PREVIEW =====
+// ===== PREVIEW (shows unsaved changes, can undo) =====
 function openPreview() {
-  // Save first so preview shows latest changes
-  saveToLocal();
-  window.open('index.html', '_blank');
-  showToast('Förhandsgranskning öppnad — spara först för att se ändringar!');
+  // Save current changes to a PREVIEW key (not the main saved key)
+  saveToStorage('nordvilt_preview');
+  // Open index.html with ?preview flag
+  window.open('index.html?preview=1', '_blank');
+  showToast('Förhandsgranskning öppnad — ändringar är INTE sparade ännu');
+}
+
+// ===== UNDO — revert to last saved state =====
+function undoChanges() {
+  if (!confirm('Är du säker? Alla osparade ändringar kommer att försvinna.')) return;
+  loadFromLocal();
+  hasUnsaved = false;
+  document.getElementById('unsavedDot').style.display = 'none';
+  document.getElementById('saveBtn').textContent = '\u{1F4BE} Spara ändringar';
+  document.getElementById('save-status').textContent = 'ÄNDRINGAR ÅNGRADE';
+  document.getElementById('save-status').style.color = '#c4a35a';
+  showToast('Ändringar ångrade — tillbaka till senast sparade version');
 }
 
 // ===== EXPORT =====
@@ -918,109 +1034,66 @@ async function exportSite() {
     let html = await resp.text();
     const data = gatherData();
 
-    // Replace text content via data-i18n keys in the SV translations object
     const textMap = {
-      'hero_sub': data.hero_sub,
-      'hero_class': data.hero_class,
-      'hero_exp_val': data.hero_exp_val,
-      'hero_status': data.hero_status,
-      'hero_cta': data.hero_cta,
-      'about_sub': data.about_sub,
-      'about_p1': data.about_p1,
-      'about_p2': data.about_p2,
-      'about_p3': data.about_p3,
-      'stat_years': data.stat1_label,
-      'stat_ha': data.stat2_label,
-      'stat_guests': data.stat3_label,
-      'stat_dogs': data.stat4_label,
-      'exp_lodge_title': data.exp_t1,
-      'exp_food_title': data.exp_t2,
-      'exp_guide_title': data.exp_t3,
-      'exp_dogs_title': data.exp_t4,
+      'hero_sub': data.hero_sub, 'hero_class': data.hero_class,
+      'hero_exp_val': data.hero_exp_val, 'hero_status': data.hero_status,
+      'hero_cta': data.hero_cta, 'about_sub': data.about_sub,
+      'about_p1': data.about_p1, 'about_p2': data.about_p2, 'about_p3': data.about_p3,
+      'stat_years': data.stat1_label, 'stat_ha': data.stat2_label,
+      'stat_guests': data.stat3_label, 'stat_dogs': data.stat4_label,
+      'exp_lodge_title': data.exp_t1, 'exp_food_title': data.exp_t2,
+      'exp_guide_title': data.exp_t3, 'exp_dogs_title': data.exp_t4,
     };
 
-    // Replace stat values
-    const statValMap = [
-      [data.stat1_val, '25+'],
-      [data.stat2_val, '8 500'],
-      [data.stat3_val, '500+'],
-      [data.stat4_val, '6'],
-    ];
-
-    // Simple text replacements in the HTML
     for (const [key, val] of Object.entries(textMap)) {
       if (!val) continue;
-      // Replace in the sv translations object
-      const regex = new RegExp(`(${key}:\\s*')([^']*)(')`, 'g');
-      html = html.replace(regex, `$1${val.replace(/'/g, "\\'")}$3`);
-      // Also replace the inline text
       const regex2 = new RegExp(`(data-i18n="${key}"[^>]*>)([^<]*)(<)`, 'g');
       html = html.replace(regex2, `$1${escapeHtml(val)}$3`);
     }
 
-    // Replace hunt card content
     if (data.hunts) {
+      const huntKeys = {
+        '0': { name: 'hunt_moose', desc: 'hunt_moose_desc' },
+        '1': { name: 'hunt_bird', desc: 'hunt_bird_desc' },
+        '2': { name: 'hunt_deer', desc: 'hunt_deer_desc' },
+        '3': { name: 'hunt_bear', desc: 'hunt_bear_desc' },
+      };
       Object.keys(data.hunts).forEach(h => {
         const hunt = data.hunts[h];
-        const huntKeys = {
-          '0': { name: 'hunt_moose', desc: 'hunt_moose_desc' },
-          '1': { name: 'hunt_bird', desc: 'hunt_bird_desc' },
-          '2': { name: 'hunt_deer', desc: 'hunt_deer_desc' },
-          '3': { name: 'hunt_bear', desc: 'hunt_bear_desc' },
-        };
+        const keys = huntKeys[h];
+        if (!keys) return;
         if (hunt.name) {
-          const k = huntKeys[h]?.name;
-          if (k) {
-            const re = new RegExp(`(data-i18n="${k}"[^>]*>)([^<]*)(<)`, 'g');
-            html = html.replace(re, `$1${escapeHtml(hunt.name)}$3`);
-          }
+          const re = new RegExp(`(data-i18n="${keys.name}"[^>]*>)([^<]*)(<)`, 'g');
+          html = html.replace(re, `$1${escapeHtml(hunt.name)}$3`);
+        }
+        if (hunt.desc) {
+          const re = new RegExp(`(data-i18n="${keys.desc}"[^>]*>)[\\s\\S]*?(</p>)`, 'g');
+          html = html.replace(re, `$1${escapeHtml(hunt.desc)}$2`);
         }
         if (hunt.price) {
           const prices = ['12 500', '8 900', '9 500', '18 500'];
           if (prices[h]) html = html.replace(new RegExp(prices[h].replace(' ', '\\s*'), 'g'), hunt.price);
         }
-        if (hunt.desc) {
-          const k = huntKeys[h]?.desc;
-          if (k) {
-            const re = new RegExp(`(data-i18n="${k}"[^>]*>)[\\s\\S]*?(</p>)`, 'g');
-            html = html.replace(re, `$1\n        ${escapeHtml(hunt.desc)}\n      $2`);
-          }
-        }
       });
     }
 
-    // Replace review content
     for (let i = 1; i <= 3; i++) {
       const name = data[`rev${i}_name`];
-      const detail = data[`rev${i}_detail`];
-      const text = data[`rev${i}_text`];
       if (name) {
         const names = ['Erik Lindström', 'Magnus Bergqvist', 'Hans-Olof Persson'];
         if (names[i-1]) html = html.replaceAll(names[i-1], name);
       }
     }
 
-    // Replace contact info
     if (data.contact_phone) html = html.replaceAll('070-123 45 67', data.contact_phone);
     if (data.contact_email) html = html.replaceAll('dennis@nordvilt.se', data.contact_email);
     if (data.contact_place) html = html.replaceAll('Ånge, Västernorrland', data.contact_place);
 
-    // Replace images with base64
-    const imgMap = {
-      'hero': 'images/hero.png',
-      'portrait': 'images/portrait.png',
-      'moose': 'images/moose.png',
-      'dogs': 'images/dogs.png',
-      'campfire': 'images/campfire.jpg',
-      'frost': 'images/frost-moor.jpg',
-    };
+    const imgMap = { hero:'images/hero.png', portrait:'images/portrait.png', moose:'images/moose.png', dogs:'images/dogs.png', campfire:'images/campfire.jpg', frost:'images/frost-moor.jpg' };
     Object.keys(imageStore).forEach(key => {
-      if (imgMap[key] && imageStore[key]) {
-        html = html.replaceAll(imgMap[key], imageStore[key]);
-      }
+      if (imgMap[key] && imageStore[key]) html = html.replaceAll(imgMap[key], imageStore[key]);
     });
 
-    // Download
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1028,7 +1101,7 @@ async function exportSite() {
     a.download = 'index.html';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Hemsida exporterad! Filen laddades ner.');
+    showToast('Hemsida exporterad!');
   } catch(e) {
     showToast('Fel vid export: ' + e.message);
     console.error(e);

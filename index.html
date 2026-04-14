@@ -656,6 +656,81 @@ section {
   .gallery-strip img { height: 200px; }
 }
 
+/* ===== USER GALLERY ===== */
+.user-gallery {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.user-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+.user-gallery-grid img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  filter: grayscale(20%) contrast(1.05);
+  border: 1px solid rgba(196,163,90,0.08);
+  transition: filter 0.4s, transform 0.4s;
+  cursor: pointer;
+}
+.user-gallery-grid img:hover {
+  filter: grayscale(0%);
+  transform: scale(1.02);
+}
+.user-gallery .section-header { margin-bottom: 2rem; }
+
+/* ===== PREVIEW BAR ===== */
+.preview-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #e87a2e;
+  color: #12150f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0.6rem 2rem;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.preview-bar button {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.preview-bar .btn-save-preview {
+  background: #12150f;
+  color: #c4a35a;
+}
+.preview-bar .btn-save-preview:hover { background: #1a1c17; }
+.preview-bar .btn-undo-preview {
+  background: transparent;
+  color: #12150f;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+.preview-bar .btn-undo-preview:hover { background: rgba(0,0,0,0.1); }
+.preview-bar .btn-back-preview {
+  background: transparent;
+  color: #12150f;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+.preview-bar .btn-back-preview:hover { background: rgba(0,0,0,0.1); }
+body.preview-mode nav { top: 38px; }
+body.preview-mode .hero { margin-top: 38px; }
+
 /* ===== REVIEWS / OMDOMEN ===== */
 .reviews-grid {
   display: grid;
@@ -1341,6 +1416,16 @@ footer {
   </div>
 </section>
 
+<!-- ===== USER GALLERY ===== -->
+<div class="user-gallery" id="user-gallery" style="display:none;">
+  <div class="section-header reveal">
+    <span class="section-number">// GALLERI</span>
+    <h2 class="section-title">Bilder från markerna</h2>
+    <div class="section-coord">FÄLTBILDER // NORDVILT</div>
+  </div>
+  <div class="user-gallery-grid" id="user-gallery-grid"></div>
+</div>
+
 <!-- ===== 05 // OMDOMEN ===== -->
 <section id="omdomen">
   <div class="section-header reveal">
@@ -1485,6 +1570,14 @@ footer {
   </div>
 </footer>
 
+<!-- PREVIEW BAR (only shown in preview mode) -->
+<div class="preview-bar" id="previewBar" style="display:none;">
+  <span>FÖRHANDSGRANSKNING — ändringar är inte sparade</span>
+  <button class="btn-save-preview" onclick="savePreviewToLive()">Spara & publicera</button>
+  <button class="btn-undo-preview" onclick="undoPreview()">Ångra ändringar</button>
+  <button class="btn-back-preview" onclick="window.close();">Stäng</button>
+</div>
+
 <!-- ADMIN LOGIN BUTTON -->
 <button class="admin-login-btn" onclick="document.getElementById('loginOverlay').classList.add('open')" title="Admin">&#x2699;</button>
 
@@ -1571,8 +1664,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ===== APPLY ADMIN CHANGES FROM LOCALSTORAGE =====
+  const isPreview = new URLSearchParams(window.location.search).has('preview');
+  const storageKey = isPreview ? 'nordvilt_preview' : 'nordvilt_admin';
+
+  // Show preview bar if in preview mode
+  if (isPreview) {
+    document.getElementById('previewBar').style.display = 'flex';
+    document.body.classList.add('preview-mode');
+  }
+
   try {
-    const raw = localStorage.getItem('nordvilt_admin');
+    const raw = localStorage.getItem(storageKey);
     if (raw) {
       const data = JSON.parse(raw);
 
@@ -1679,9 +1781,39 @@ document.addEventListener('DOMContentLoaded', () => {
           if (data[dataKey]) translations.sv[i18nKey] = data[dataKey];
         }
       }
+
+      // Gallery images
+      if (data.gallery && data.gallery.length > 0) {
+        const gallerySection = document.getElementById('user-gallery');
+        const galleryGrid = document.getElementById('user-gallery-grid');
+        if (gallerySection && galleryGrid) {
+          gallerySection.style.display = 'block';
+          galleryGrid.innerHTML = data.gallery.map(src =>
+            `<img src="${src}" alt="Galleri" loading="lazy">`
+          ).join('');
+        }
+      }
     }
   } catch(e) { console.warn('Admin data load:', e); }
 });
+
+// ===== PREVIEW BAR FUNCTIONS =====
+function savePreviewToLive() {
+  // Copy preview data to the main saved key
+  const previewData = localStorage.getItem('nordvilt_preview');
+  if (previewData) {
+    localStorage.setItem('nordvilt_admin', previewData);
+    localStorage.removeItem('nordvilt_preview');
+    alert('Ändringar sparade! Sidan uppdateras nu.');
+    window.location.href = window.location.pathname; // reload without ?preview
+  }
+}
+
+function undoPreview() {
+  localStorage.removeItem('nordvilt_preview');
+  alert('Ändringar ångrade. Tillbaka till senast sparade version.');
+  window.location.href = window.location.pathname;
+}
 
 // ===== LANGUAGE SYSTEM =====
 const translations = {
